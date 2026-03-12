@@ -1,0 +1,27 @@
+import HeroSection from "@/components/HeroSection";
+import CountdownSection from "@/components/CountdownSection";
+import PrayerScheduleSection from "@/components/PrayerScheduleSection";
+import ImsakiyahSection from "@/components/ImsakiyahSection";
+import VirtuesSection from "@/components/VirtuesSection";
+import DoaSection from "@/components/DoaSection";
+import DoaHarianSection from "@/components/DoaHarianSection";
+import ShareSection from "@/components/ShareSection";
+import FooterSection from "@/components/FooterSection";
+
+const Index = () => {
+  return (
+    <main className="min-h-screen bg-background overflow-x-hidden">
+      <HeroSection />
+      <CountdownSection />
+      <PrayerScheduleSection />
+      <ImsakiyahSection />
+      <VirtuesSection />
+      <DoaSection />
+      <DoaHarianSection />
+      <ShareSection />
+      <FooterSection />
+    </main>
+  );
+};
+
+export default Index;
