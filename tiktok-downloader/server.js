@@ -176,18 +176,57 @@ app.get("/api/proxy", async (req, res) => {
     if (len) res.setHeader("Content-Length", len);
 
     const reader = upstream.body.getReader();
+    let cancelled = false;
+    const cancelReader = (reason) => {
+      if (cancelled) return;
+      cancelled = true;
+      reader.cancel(reason).catch(() => {});
+    };
+    req.on("close", () => cancelReader("client disconnected"));
+    res.on("error", (e) => cancelReader(e));
+
     const pump = async () => {
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        res.write(Buffer.from(value));
+      try {
+        while (true) {
+          if (res.destroyed || !res.writable) {
+            cancelReader("response not writable");
+            return;
+          }
+          const { value, done } = await reader.read();
+          if (done) break;
+          if (!res.write(Buffer.from(value))) {
+            await new Promise((resolve, reject) => {
+              const onDrain = () => {
+                res.off("error", onErr);
+                res.off("close", onClose);
+                resolve();
+              };
+              const onErr = (e) => {
+                res.off("drain", onDrain);
+                res.off("close", onClose);
+                reject(e);
+              };
+              const onClose = () => {
+                res.off("drain", onDrain);
+                res.off("error", onErr);
+                reject(new Error("client closed"));
+              };
+              res.once("drain", onDrain);
+              res.once("error", onErr);
+              res.once("close", onClose);
+            });
+          }
+        }
+        res.end();
+      } catch (e) {
+        cancelReader(e);
+        if (!res.headersSent) res.status(502);
+        if (!res.writableEnded) res.end();
+        throw e;
       }
-      res.end();
     };
     pump().catch((e) => {
       console.error("[/api/proxy] stream err", e);
-      if (!res.headersSent) res.status(502);
-      res.end();
     });
   } catch (err) {
     console.error("[/api/proxy]", err);
