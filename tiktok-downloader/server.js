@@ -139,6 +139,7 @@ app.get("/api/proxy", async (req, res) => {
       if (r.status < 300 || r.status >= 400) return r;
       const loc = r.headers.get("location");
       if (!loc) return r;
+      await r.body?.cancel().catch(() => {});
       const next = new URL(loc, current).toString();
       if (!isAllowedProxyTarget(next)) {
         const err = new Error(`Redirect blocked to disallowed host: ${next}`);
@@ -156,6 +157,7 @@ app.get("/api/proxy", async (req, res) => {
     const upstream = await fetchWithAllowlistedRedirects(target);
 
     if (!upstream.ok || !upstream.body) {
+      await upstream.body?.cancel().catch(() => {});
       return res.status(502).send(`Upstream error: ${upstream.status}`);
     }
 
