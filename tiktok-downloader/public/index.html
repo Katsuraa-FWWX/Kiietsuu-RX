@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kiietsuu — TikTok Downloader</title>
+    <meta
+      name="description"
+      content="Download video TikTok tanpa watermark, serta audio MP3, gratis dan cepat."
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%AC%87%3C/text%3E%3C/svg%3E"
+    />
+    <style>
+      body {
+        background:
+          radial-gradient(1200px 600px at 10% -10%, #ff2d5533 0%, transparent 50%),
+          radial-gradient(900px 500px at 110% 10%, #25f4ee33 0%, transparent 50%),
+          #0b0b12;
+      }
+      .glass {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen text-slate-100">
+    <header class="max-w-3xl mx-auto px-4 pt-10 pb-6 text-center">
+      <div class="inline-flex items-center gap-2 text-sm text-slate-300">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
+        Gratis · Tanpa Watermark · Cepat
+      </div>
+      <h1
+        class="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-pink-400 via-fuchsia-300 to-cyan-300"
+      >
+        TikTok Downloader
+      </h1>
+      <p class="mt-2 text-slate-300 text-sm sm:text-base">
+        Tempel link video TikTok mana saja dan unduh MP4 tanpa watermark, MP4
+        original, atau MP3.
+      </p>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-4 pb-20">
+      <section class="glass rounded-2xl p-4 sm:p-6 shadow-2xl">
+        <form id="form" class="flex flex-col sm:flex-row gap-3">
+          <input
+            id="url"
+            type="url"
+            required
+            placeholder="https://www.tiktok.com/@user/video/..."
+            class="flex-1 rounded-xl bg-slate-900/70 border border-white/10 px-4 py-3 outline-none focus:border-pink-400 placeholder:text-slate-500"
+          />
+          <button
+            id="submit"
+            type="submit"
+            class="rounded-xl bg-gradient-to-r from-pink-500 to-fuchsia-500 hover:from-pink-400 hover:to-fuchsia-400 px-5 py-3 font-semibold shadow-lg shadow-pink-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <span id="submit-label">Ambil</span>
+          </button>
+        </form>
+        <div class="mt-3 flex flex-wrap gap-2 text-xs text-slate-400">
+          <button
+            type="button"
+            id="paste"
+            class="rounded-full border border-white/10 px-3 py-1 hover:bg-white/5"
+          >
+            Tempel dari clipboard
+          </button>
+          <button
+            type="button"
+            id="clear"
+            class="rounded-full border border-white/10 px-3 py-1 hover:bg-white/5"
+          >
+            Bersihkan
+          </button>
+        </div>
+      </section>
+
+      <section id="error" class="hidden mt-6 glass rounded-2xl p-4 border-rose-400/30">
+        <p class="text-rose-300 text-sm" id="error-text"></p>
+      </section>
+
+      <section id="result" class="hidden mt-6 glass rounded-2xl overflow-hidden">
+        <div class="flex flex-col md:flex-row">
+          <div class="md:w-1/2 bg-black/50 flex items-center justify-center p-3">
+            <video
+              id="player"
+              class="w-full rounded-xl"
+              controls
+              playsinline
+              preload="metadata"
+            ></video>
+          </div>
+          <div class="md:w-1/2 p-5 space-y-4">
+            <div class="flex items-center gap-3">
+              <img
+                id="avatar"
+                class="w-10 h-10 rounded-full bg-slate-700 object-cover"
+                alt=""
+              />
+              <div>
+                <div id="author" class="font-semibold"></div>
+                <div id="username" class="text-xs text-slate-400"></div>
+              </div>
+            </div>
+            <p id="title" class="text-sm text-slate-200 leading-relaxed"></p>
+            <div
+              class="grid grid-cols-4 gap-2 text-center text-xs text-slate-300"
+            >
+              <div class="rounded-lg bg-white/5 py-2">
+                <div id="stat-play" class="font-semibold text-slate-100">0</div>
+                <div>views</div>
+              </div>
+              <div class="rounded-lg bg-white/5 py-2">
+                <div id="stat-like" class="font-semibold text-slate-100">0</div>
+                <div>likes</div>
+              </div>
+              <div class="rounded-lg bg-white/5 py-2">
+                <div id="stat-comment" class="font-semibold text-slate-100">
+                  0
+                </div>
+                <div>komentar</div>
+              </div>
+              <div class="rounded-lg bg-white/5 py-2">
+                <div id="stat-share" class="font-semibold text-slate-100">0</div>
+                <div>share</div>
+              </div>
+            </div>
+
+            <div class="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <a
+                id="dl-nowm"
+                class="hidden text-center rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-semibold py-3"
+                >MP4 · No Watermark</a
+              >
+              <a
+                id="dl-hd"
+                class="hidden text-center rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-semibold py-3"
+                >MP4 · HD</a
+              >
+              <a
+                id="dl-wm"
+                class="hidden text-center rounded-xl bg-slate-700 hover:bg-slate-600 font-semibold py-3"
+                >MP4 · Watermark</a
+              >
+              <a
+                id="dl-mp3"
+                class="hidden text-center rounded-xl bg-fuchsia-500 hover:bg-fuchsia-400 text-slate-900 font-semibold py-3"
+                >MP3 · Audio</a
+              >
+            </div>
+
+            <div id="images-wrap" class="hidden">
+              <div class="text-xs text-slate-400 mb-2">Slide images</div>
+              <div
+                id="images"
+                class="grid grid-cols-3 gap-2"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mt-10 text-center text-xs text-slate-500">
+        <p>
+          Situs ini hanya proxy metadata publik dari TikTok. Hormati hak cipta
+          kreator — jangan mengunggah ulang konten tanpa izin.
+        </p>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
