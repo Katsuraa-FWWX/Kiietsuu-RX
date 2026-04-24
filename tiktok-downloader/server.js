@@ -124,14 +124,36 @@ app.get("/api/proxy", async (req, res) => {
     return res.status(400).send("Invalid proxy target");
   }
 
+  const MAX_HOPS = 5;
+  const fetchWithAllowlistedRedirects = async (startUrl) => {
+    let current = startUrl;
+    for (let hop = 0; hop <= MAX_HOPS; hop++) {
+      const r = await fetch(current, {
+        redirect: "manual",
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Mobile Safari/537.36",
+          Referer: "https://www.tikwm.com/",
+        },
+      });
+      if (r.status < 300 || r.status >= 400) return r;
+      const loc = r.headers.get("location");
+      if (!loc) return r;
+      const next = new URL(loc, current).toString();
+      if (!isAllowedProxyTarget(next)) {
+        const err = new Error(`Redirect blocked to disallowed host: ${next}`);
+        err.code = "REDIRECT_BLOCKED";
+        throw err;
+      }
+      current = next;
+    }
+    const err = new Error("Too many redirects");
+    err.code = "TOO_MANY_REDIRECTS";
+    throw err;
+  };
+
   try {
-    const upstream = await fetch(target, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Mobile Safari/537.36",
-        Referer: "https://www.tikwm.com/",
-      },
-    });
+    const upstream = await fetchWithAllowlistedRedirects(target);
 
     if (!upstream.ok || !upstream.body) {
       return res.status(502).send(`Upstream error: ${upstream.status}`);
@@ -169,6 +191,12 @@ app.get("/api/proxy", async (req, res) => {
     });
   } catch (err) {
     console.error("[/api/proxy]", err);
+    if (err && err.code === "REDIRECT_BLOCKED") {
+      return res.status(400).send("Invalid proxy target");
+    }
+    if (err && err.code === "TOO_MANY_REDIRECTS") {
+      return res.status(502).send("Too many redirects");
+    }
     res.status(502).send("Proxy failed: " + err.message);
   }
 });
