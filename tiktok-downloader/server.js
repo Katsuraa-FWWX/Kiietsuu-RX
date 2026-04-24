@@ -96,9 +96,31 @@ app.post("/api/download", async (req, res) => {
   }
 });
 
+const PROXY_HOST_ALLOWLIST = [
+  /\.tikwm\.com$/i,
+  /\.tiktokcdn\.com$/i,
+  /\.tiktokcdn-us\.com$/i,
+  /\.tiktokcdn-eu\.com$/i,
+  /\.tiktokv\.com$/i,
+  /\.byteoversea\.com$/i,
+  /\.muscdn\.com$/i,
+  /\.bytedance\.net$/i,
+];
+
+function isAllowedProxyTarget(target) {
+  let parsed;
+  try {
+    parsed = new URL(target);
+  } catch (_) {
+    return false;
+  }
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return false;
+  return PROXY_HOST_ALLOWLIST.some((re) => re.test(parsed.hostname));
+}
+
 app.get("/api/proxy", async (req, res) => {
   const target = req.query.url ? String(req.query.url) : "";
-  if (!/^https?:\/\/[^\s]+\.tikwm\.com\/[^\s]+$/i.test(target)) {
+  if (!isAllowedProxyTarget(target)) {
     return res.status(400).send("Invalid proxy target");
   }
 
